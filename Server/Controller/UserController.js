@@ -5,27 +5,35 @@ import jwt from "jsonwebtoken";
 export const registerUser = async (req, res) => {
     const { username, email, password } = req.body;
     if (username && email && password) {
-        const user = await userModel.findOne({ email: email });
-        if (!user) {
-            const hash = await bcrypt.hash(password, 10);
-            const newUser = new userModel({ ...req.body, password: hash });
-            const data = await newUser.save();
-            const token = jwt.sign({ userId: data._id }, process.env.key, { expiresIn: "3d" });
-            res.send({
-                status: "succes",
-                message: "user registered Succes",
-                data: data,
-                token: token,
-            })
+        try {
+            const user = await userModel.findOne({ email: email });
+            if (!user) {
+                const hash = await bcrypt.hash(password, 10);
+                const newUser = new userModel({ ...req.body, password: hash });
+                const data = await newUser.save();
+                const token = jwt.sign({ userId: data._id }, process.env.key, { expiresIn: "3d" });
+                res.send({
+                    status: "succes",
+                    message: "user registered Succes",
+                    data: data,
+                    token: token,
+                })
 
-        }
-        else {
-            res.send({
-                status: "error",
-                message: "email allready registered",
-            })
+            }
+            else {
+                res.send({
+                    status: "error",
+                    message: "email allready registered",
+                })
 
+            }
+        } catch (error) {
+            res.send({
+                status:"error",
+                message:error.message
+            })
         }
+
     }
     else {
         res.send({
@@ -110,6 +118,7 @@ export const findUser = async (req, res) => {
     const id = req.params.id;
     try {
         const user = await userModel.findById(id);
+        console.log(user);
         if (user) {
             res.send({
                 status: "succes",
@@ -118,11 +127,10 @@ export const findUser = async (req, res) => {
             })
 
         }
-        else
-        {
+        else {
             res.send({
-                status:"error",
-                message:"cannot find user with this id",
+                status: "error",
+                message: "cannot find user with this id",
             })
         }
 
