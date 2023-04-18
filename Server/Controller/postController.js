@@ -194,7 +194,6 @@ export const addFriendRequest = async (req, res) => {
     console.log(id);
     try {
         const targetUser = await userModel.findById(id);
-        console.log(targetUser)
         if (targetUser) {
             if (targetUser.friendsRequest.includes(req.user._id.toString())) {
                 targetUser.friendsRequest.splice(targetUser.friendsRequest.indexOf(req.user._id.toString()), 1);
@@ -255,11 +254,16 @@ export const timelistPost = async (req, res) => {
 }
 export const acceptFriendRequest = async (req, res) => {
     const currentUser = await userModel.findById(req.user._id);
+    console.log(req.params.id);
     const friendIdToAccept = req.params.id;
+    const userwhoSendRequest = await userModel.findById(friendIdToAccept);
+    console.log(currentUser.friendsRequest,friendIdToAccept);
     try {
         if (currentUser.friendsRequest.includes(friendIdToAccept)) {
             currentUser.friendsRequest.splice(currentUser.friendsRequest.indexOf(friendIdToAccept), 1);
             currentUser.friends.push(friendIdToAccept);
+            userwhoSendRequest.friends.push(req.user._id.toString());
+            userwhoSendRequest.save();
             currentUser.save();
             res.send({
                 status: "succes",
@@ -267,11 +271,10 @@ export const acceptFriendRequest = async (req, res) => {
             })
 
         }
-        else
-        {
+        else {
             res.send({
-                status:"error",
-                message:"cannot detecte request",
+                status: "error",
+                message: "cannot detecte request",
             })
         }
 
@@ -311,5 +314,78 @@ export const getAllPost = async (req, res) => {
             status: "error",
             message: "cannot find user",
         })
+    }
+}
+export const deleteFriendRequest = async (req, res) => {
+    try {
+        const currentUser = await userModel.findById(req.user._id);
+        const friendIdToDelete = req.params.id;
+        if (currentUser.friendsRequest.includes(friendIdToDelete)) 
+        {
+            currentUser.friendsRequest.splice(currentUser.friendsRequest.indexOf(friendIdToDelete),1);
+            currentUser.save()
+            res.send(
+                {
+                    status:"succes",
+                    message:"friend request deleted"
+                }
+            )
+
+        }
+        else {
+            res.send({
+                status:"error",
+                message:"cannot find request with this id"
+            })
+
+        }
+
+    } catch (error) {
+        res.send({
+            status: "error",
+            message: "cannot delete request"
+        })
+
+    }
+
+}
+export const fetchUserPostById = async(req,res)=>{
+    try {
+        const {id} = req.params;
+        const userPosts = await postModel.find({userId:id});
+        res.send({
+            status:"succes",
+            message:"succes fetched posts",
+            data:userPosts,
+        })
+        
+    } catch (error) {
+        res.send({
+            status:"error",
+            message:"something went wrong"
+        })
+    }
+}
+
+export const unfriend = async(req,res)=>
+{
+    try {
+        const currentUser = await userModel.findById(req.user._id);
+        const userToUnfriend = await userModel.findById(req.params.id);
+        currentUser.friends.splice(currentUser.friends.indexOf(req.params.id.toString()),1);
+        userToUnfriend.friends.splice(currentUser.friends.indexOf(req.user._id.toString()),1);
+        currentUser.save();
+        userToUnfriend.save();
+        res.send({
+            status:"succes",
+            message:"friend unfriend Succes",
+        })
+        
+    } catch (error) {
+        res.send({
+            status:"error",
+            message:"something went wrong"
+        })
+        
     }
 }

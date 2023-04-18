@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 export const registerUser = async (req, res) => {
-    const { username, email, password } = req.body;
+    let { username, email, password } = req.body;
     if (username && email && password) {
         try {
             const user = await userModel.findOne({ email: email });
@@ -15,7 +15,7 @@ export const registerUser = async (req, res) => {
                 res.send({
                     status: "succes",
                     message: "user registered Succes",
-                    data: data,
+                    data: {...data._doc,password:null},
                     token: token,
                 })
 
@@ -28,6 +28,7 @@ export const registerUser = async (req, res) => {
 
             }
         } catch (error) {
+            console.log(error);
             res.send({
                 status:"error",
                 message:error.message
@@ -123,7 +124,7 @@ export const findUser = async (req, res) => {
             res.send({
                 status: "succes",
                 message: "user find succes",
-                data: user,
+                data: {...user._doc,password:null},
             })
 
         }
